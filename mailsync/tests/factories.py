@@ -26,14 +26,14 @@ def make_account(**fields):
 	).insert(ignore_permissions=True)
 
 
-def make_mail(account, message_id, days_ago=1):
+def make_mail(account, message_id, days_ago=1, subject=None):
 	return frappe.get_doc(
 		{
 			"doctype": "Communication",
 			"communication_type": "Communication",
 			"communication_medium": "Email",
 			"sent_or_received": "Received",
-			"subject": message_id,
+			"subject": subject or message_id,
 			"content": "Body",
 			"sender": "customer@example.com",
 			"email_account": account,
