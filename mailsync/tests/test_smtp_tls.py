@@ -76,7 +76,9 @@ class TestSmtpServer(IntegrationTestCase):
 					server.session.quit()
 
 
-@unittest.skipUnless(CA_HOST, "set MAILSYNC_TEST_CA_SMTP_HOST to a public SMTP host with a CA-signed certificate")
+@unittest.skipUnless(
+	CA_HOST, "set MAILSYNC_TEST_CA_SMTP_HOST to a public SMTP host with a CA-signed certificate"
+)
 class TestCaSignedServer(IntegrationTestCase):
 	def test_verified_connection_works(self):
 		tls.apply()
