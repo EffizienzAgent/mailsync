@@ -32,15 +32,16 @@ Set up an Email Account with IMAP and *Enable Incoming* as usual. Mailsync picks
 
 ## TLS
 
-With *Use SSL* the connection is verified as usual. With *Use STARTTLS*, Python's `imaplib` does not check the server certificate unless it is given an SSL context, and Frappe passes none. Mailsync fixes this in every request and background job, including Frappe's own inbox pull: STARTTLS checks the certificate and the host name against the system's trusted CAs.
+Python's `imaplib` and `smtplib` do not check the server certificate unless they are given an SSL context, and Frappe passes none for IMAP STARTTLS, SMTP STARTTLS and SMTP over SSL. Mailsync fixes this in every request and background job, including Frappe's own inbox pull and the outgoing email queue. These connections now check the certificate and the host name against the system's trusted CAs. IMAP over SSL was already verified by Frappe.
 
 For a test server with a self-signed certificate, you can turn the check off for one site:
 
 ```bash
-bench --site test.site set-config mailsync_allow_self_signed_starttls 1
+bench --site test.site set-config mailsync_allow_self_signed_starttls 1  # incoming IMAP
+bench --site test.site set-config mailsync_allow_self_signed_smtp 1      # outgoing SMTP
 ```
 
-Do not set this in production.
+Do not set these in production.
 
 ## Hooks
 
@@ -91,12 +92,14 @@ docker run -d -p 3143:3143 -e GREENMAIL_OPTS="-Dgreenmail.setup.test.all -Dgreen
 MAILSYNC_TEST_IMAP_HOST=127.0.0.1 bench --site test.site run-tests --app mailsync
 ```
 
-The tests in `test_tls.py` need a STARTTLS server with a self-signed certificate. They run when `MAILSYNC_TEST_STARTTLS_HOST` (and optionally `MAILSYNC_TEST_STARTTLS_PORT`, default `31143`) is set. CI uses Dovecot:
+The tests in `test_tls.py` and `test_smtp_tls.py` need IMAP and SMTP servers with a self-signed certificate. They run when `MAILSYNC_TEST_STARTTLS_HOST` (IMAP STARTTLS on port `31143`) and `MAILSYNC_TEST_SMTP_HOST` (SMTP STARTTLS on `31587`, SMTP over SSL on `31465`) are set. CI uses Dovecot:
 
 ```bash
-docker run -d -p 31143:31143 -e USER_PASSWORD=secret dovecot/dovecot:2.4.1
-MAILSYNC_TEST_STARTTLS_HOST=127.0.0.1 bench --site test.site run-tests --app mailsync
+docker run -d -p 31143:31143 -p 31587:31587 -p 31465:31465 -e USER_PASSWORD=secret dovecot/dovecot:2.4.1
+MAILSYNC_TEST_STARTTLS_HOST=127.0.0.1 MAILSYNC_TEST_SMTP_HOST=127.0.0.1 bench --site test.site run-tests --app mailsync
 ```
+
+To check that a CA-signed server still connects, set `MAILSYNC_TEST_CA_SMTP_HOST` to a public SMTP host. This test needs network access and does not run in CI.
 
 ## Professional setup & support
 
