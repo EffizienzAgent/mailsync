@@ -4,6 +4,9 @@ app_publisher = "EffizienzAgent"
 app_description = "IMAP mail sync: Sent folder import and reply/close status from the mailbox"
 app_license = "mit"
 
+before_request = ["mailsync.tls.apply"]
+before_job = ["mailsync.tls.apply"]
+
 scheduler_events = {
 	"cron": {
 		"*/2 * * * *": ["mailsync.mail_sync.sync_all"],

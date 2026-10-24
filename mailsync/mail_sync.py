@@ -4,7 +4,7 @@ import frappe
 from frappe import _
 from frappe.utils.background_jobs import get_jobs
 
-from mailsync import mail_status, sent_mail
+from mailsync import mail_status, sent_mail, tls
 
 QUEUE = "default"
 JOB_TIMEOUT = 600
@@ -58,6 +58,7 @@ def accounts():
 
 
 def sync_account(email_account):
+	tls.apply()
 	doc = frappe.get_doc("Email Account", email_account)
 	frappe.conf.imap_timeout = frappe.conf.imap_timeout or IMAP_TIMEOUT
 	try:

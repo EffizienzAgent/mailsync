@@ -11,7 +11,11 @@ from mailsync.mail_status import check, quote, sent_folder
 
 STATE_KEY = "mailsync_sent_folder:{}"
 BATCH = 50
+MAX_MAIL_BYTES = 25 * 1024 * 1024
+MAX_BATCH_BYTES = 100 * 1024 * 1024
 STATUS_FIELD = re.compile(rb"(UIDVALIDITY|UIDNEXT) (\d+)")
+FETCH_UID = re.compile(rb"\bUID (\d+)")
+FETCH_SIZE = re.compile(rb"\bRFC822\.SIZE (\d+)")
 
 
 class SentMail(InboundMail):
@@ -88,7 +92,11 @@ def fetch_new(imap, account):
 	folder = sent_folder(imap, account)
 	if not folder:
 		return None, []
-	uidvalidity, uidnext = folder_status(imap, folder)
+	status = folder_status(imap, folder)
+	if not status:
+		frappe.log_error(title=_("Sent folder status missing: {0}").format(account.name))
+		return None, []
+	uidvalidity, uidnext = status
 	state = load_state(account.name)
 	if state.get("folder") != folder or state.get("uidvalidity") != uidvalidity:
 		return (folder, uidvalidity, uidnext - 1), []
@@ -98,19 +106,53 @@ def fetch_new(imap, account):
 	uids = [u for u in uids if u > last][:BATCH]
 	if not uids:
 		return None, []
-	mails = [SentMail(fetch_raw(imap, uid), account, str(uid), folder) for uid in uids]
-	return (folder, uidvalidity, uids[-1]), mails
+	mails, done = [], last
+	sizes = mail_sizes(imap, uids)
+	total = 0
+	for uid in uids:
+		size = sizes.get(uid)
+		if size is None or size > MAX_MAIL_BYTES:
+			frappe.log_error(title=_("Sent mail skipped: {0} UID {1}").format(account.name, uid))
+			done = uid
+			continue
+		if total and total + size > MAX_BATCH_BYTES:
+			break
+		raw = fetch_raw(imap, uid)
+		if raw is None or len(raw) > MAX_MAIL_BYTES:
+			frappe.log_error(title=_("Sent mail skipped: {0} UID {1}").format(account.name, uid))
+		else:
+			mails.append(SentMail(raw, account, str(uid), folder))
+		total += size
+		done = uid
+	return (folder, uidvalidity, done), mails
 
 
 def folder_status(imap, folder):
 	response = check(imap.status(quote(folder), "(UIDVALIDITY UIDNEXT)"))[0]
+	if not isinstance(response, bytes):
+		return None
 	values = {key.decode(): int(value) for key, value in STATUS_FIELD.findall(response)}
+	if "UIDVALIDITY" not in values or "UIDNEXT" not in values:
+		return None
 	return values["UIDVALIDITY"], values["UIDNEXT"]
+
+
+def mail_sizes(imap, uids):
+	data = check(imap.uid("fetch", ",".join(str(u) for u in uids), "(RFC822.SIZE)"))
+	sizes = {}
+	for part in data:
+		line = part[0] if isinstance(part, tuple) else part
+		if not isinstance(line, bytes):
+			continue
+		uid, size = FETCH_UID.search(line), FETCH_SIZE.search(line)
+		if uid and size:
+			sizes[int(uid[1])] = int(size[1])
+	return sizes
 
 
 def fetch_raw(imap, uid):
 	data = check(imap.uid("fetch", str(uid), "(BODY.PEEK[])"))
-	return next(part[1] for part in data if isinstance(part, tuple))
+	return next((part[1] for part in data if isinstance(part, tuple) and isinstance(part[1], bytes)), None)
 
 
 def load_state(account):

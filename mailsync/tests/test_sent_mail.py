@@ -36,6 +36,9 @@ class FakeImap:
 		self.uidvalidity = uidvalidity
 		self.flags = flags
 		self.readonly = []
+		self.sizes = {}
+		self.status_response = None
+		self.fetched = []
 
 	def add(self, uid, raw):
 		self.mails[uid] = raw
@@ -44,6 +47,8 @@ class FakeImap:
 		return "OK", [b'(\\HasNoChildren) "." "INBOX"', f'({self.flags}) "." "{SENT}"'.encode()]
 
 	def status(self, folder, items):
+		if self.status_response is not None:
+			return "OK", [self.status_response]
 		uidnext = max(self.mails, default=0) + 1
 		return "OK", [f"{folder} (UIDVALIDITY {self.uidvalidity} UIDNEXT {uidnext})".encode()]
 
@@ -56,7 +61,15 @@ class FakeImap:
 			start = int(args[1].split()[1].split(":")[0])
 			uids = [u for u in sorted(self.mails) if u >= start] or sorted(self.mails)[-1:]
 			return "OK", [b" ".join(str(u).encode() for u in uids)]
+		if command == "fetch" and args[1] == "(RFC822.SIZE)":
+			lines = []
+			for uid in args[0].split(","):
+				size = self.sizes.get(int(uid), len(self.mails[int(uid)]))
+				if size is not None:
+					lines.append(f"1 (UID {uid} RFC822.SIZE {size})".encode())
+			return "OK", lines
 		if command == "fetch":
+			self.fetched.append(int(args[0]))
 			raw = self.mails[int(args[0])]
 			return "OK", [(f"1 (UID {args[0]} BODY[] {{{len(raw)}}}".encode(), raw), b")"]
 		raise AssertionError(f"unexpected UID {command}")
@@ -248,3 +261,38 @@ class TestSentMail(IntegrationTestCase):
 			sent_mail.load_state(self.account.name), {"folder": SENT, "uidvalidity": 7, "uid": 2}
 		)
 		self.assertTrue(frappe.db.get_default(f"mailsync_sent_folder:{self.account.name}"))
+
+	def test_missing_status_fields_skip_the_run(self):
+		imap = self.started(1)
+		before = sent_mail.load_state(self.account.name)
+		imap.add(2, self.mail("new@example.com", unique("Hidden")))
+		for response in (b"INBOX.Sent (UIDNEXT 3)", b"INBOX.Sent ()", None):
+			imap.status_response = response or (b"",)
+			with patch.object(frappe, "log_error") as log:
+				self.assertEqual(self.sync(imap), [])
+			log.assert_called_once()
+			self.assertEqual(sent_mail.load_state(self.account.name), before)
+
+	def test_oversized_and_unsized_mails_are_skipped(self):
+		imap = self.started()
+		imap.add(1, self.mail("a@example.com", unique("Huge")))
+		imap.add(2, self.mail("b@example.com", unique("Unsized")))
+		small = unique("Small")
+		imap.add(3, self.mail("c@example.com", small))
+		imap.sizes = {1: sent_mail.MAX_MAIL_BYTES + 1, 2: None}
+		with patch.object(frappe, "log_error") as log:
+			[name] = self.sync(imap)
+		self.assertEqual(frappe.db.get_value("Communication", name, "subject"), small)
+		self.assertEqual(imap.fetched, [3])
+		self.assertEqual(log.call_count, 2)
+		self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 3)
+
+	def test_batch_is_capped_by_size(self):
+		imap = self.started()
+		for uid in range(1, 4):
+			imap.add(uid, self.mail("bulk@example.com", unique("Big")))
+		imap.sizes = dict.fromkeys(range(1, 4), 1000)
+		with patch.object(sent_mail, "MAX_BATCH_BYTES", 2500):
+			self.assertEqual(len(self.sync(imap)), 2)
+			self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 2)
+			self.assertEqual(len(self.sync(imap)), 1)

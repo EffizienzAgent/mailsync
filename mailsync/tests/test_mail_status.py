@@ -1,4 +1,6 @@
+import imaplib
 import re
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
@@ -15,8 +17,14 @@ class FakeImap:
 		self.selected = None
 		self.readonly = []
 		self.searches = 0
+		self.criteria = []
+		self.rejected = set()
+		self.raises = None
+		self.list_response = None
 
 	def list(self):
+		if self.list_response is not None:
+			return "OK", self.list_response
 		return "OK", [f'({self.flags.get(name, "")}) "/" "{name}"'.encode() for name in self.folders]
 
 	def select(self, folder, readonly=False):
@@ -28,7 +36,12 @@ class FakeImap:
 
 	def search(self, charset, criteria):
 		self.searches += 1
+		self.criteria.append(criteria)
 		wanted = set(re.findall(r'"<([^>]+)>"', criteria))
+		if wanted & self.rejected:
+			if self.raises:
+				raise self.raises
+			return "BAD", [b"Error in IMAP command SEARCH"]
 		numbers = [
 			str(index + 1).encode()
 			for index, headers in enumerate(self.folders[self.selected])
@@ -147,6 +160,56 @@ class TestMailStatus(IntegrationTestCase):
 		with hooks("mailsync_status_changed", ["mailsync.tests.test_mail_status.record"]):
 			self.sync(FakeImap({"INBOX": [{"Message-ID": "<stays@example.com>"}], "Sent": []}))
 		self.assertEqual(CHANGES, [])
+
+	def test_unsafe_message_ids_are_never_searched(self):
+		unsafe = [
+			'quote"d@example.com',
+			"back\\slash@example.com",
+			"sp ace@example.com",
+			"umlaut\u00fc@example.com",
+			"a<b>c@example.com",
+			"",
+		]
+		mails = [make_mail(self.account, f"<{i}>", subject="Unsafe") for i in unsafe]
+		moved = make_mail(self.account, "safe-moved@example.com")
+		imap = FakeImap({"INBOX": [], "Sent": []})
+		self.sync(imap)
+		self.assertEqual(status(moved), "Closed")
+		self.assertEqual([status(m) for m in mails], ["Open"] * len(mails))
+		self.assertFalse([c for c in imap.criteria if "safe-moved" not in c])
+
+	def test_failing_chunk_leaves_only_its_mails_unchanged(self):
+		for raises in (None, imaplib.IMAP4.error("parse error")):
+			with self.subTest(raises=raises):
+				rejected = make_mail(self.account, f"rejected{id(raises)}@example.com")
+				moved = make_mail(self.account, f"moved{id(raises)}@example.com")
+				imap = FakeImap({"INBOX": [], "Sent": []})
+				imap.rejected, imap.raises = {rejected.message_id}, raises
+				with patch.object(mail_status, "CHUNK", 1), patch.object(frappe, "log_error") as log:
+					self.sync(imap)
+				self.assertEqual(status(rejected), "Open")
+				self.assertEqual(status(moved), "Closed")
+				self.assertTrue(log.called)
+
+	def test_lost_connection_still_aborts(self):
+		mail = make_mail(self.account, "abort@example.com")
+		imap = FakeImap({"INBOX": [], "Sent": []})
+		imap.rejected, imap.raises = {"abort@example.com"}, imaplib.IMAP4.abort("socket closed")
+		with self.assertRaises(imaplib.IMAP4.abort):
+			self.sync(imap)
+		self.assertEqual(status(mail), "Open")
+
+	def test_list_handles_literals_and_garbage(self):
+		imap = FakeImap({})
+		imap.list_response = [
+			b"garbage",
+			None,
+			(b'(\\HasNoChildren \\Sent) "/" {9}', b"Gesendet!"),
+			b"",
+			(b"(\\HasNoChildren) {3}",),
+		]
+		account = frappe.get_doc("Email Account", self.account)
+		self.assertEqual(mail_status.sent_folder(imap, account), "Gesendet!")
 
 
 CHANGES = []
