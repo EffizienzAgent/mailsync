@@ -76,9 +76,9 @@ docker run -d -p 3143:3143 -e GREENMAIL_OPTS="-Dgreenmail.setup.test.all -Dgreen
 MAILSYNC_TEST_IMAP_HOST=127.0.0.1 bench --site test.site run-tests --app mailsync
 ```
 
-## Need help?
+## Professional setup & support
 
-If you want Mailsync set up and running for your team, [mittelstandshub.de](https://mittelstandshub.de) can do that for you.
+Need help setting this up or integrating it into your Frappe stack? Write to oss@effizienzagent.de (English or German). German-speaking SMEs: see [mittelstandshub.de](https://mittelstandshub.de).
 
 ## License
 
