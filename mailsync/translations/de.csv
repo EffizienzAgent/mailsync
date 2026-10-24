@@ -1,0 +1,7 @@
+Mail sync login failed: {0},Anmeldung für den Mailabgleich fehlgeschlagen: {0}
+Mail pull failed: {0},Abruf der E-Mails fehlgeschlagen: {0}
+Sent folder sync failed: {0},Abgleich des Gesendet-Ordners fehlgeschlagen: {0}
+Mail status sync failed: {0},Abgleich des E-Mail-Status fehlgeschlagen: {0}
+Sent mail import failed: {0},Import der gesendeten E-Mail fehlgeschlagen: {0}
+Mailsync,Mailsync
+"IMAP mail sync: Sent folder import and reply/close status from the mailbox","IMAP-Mailabgleich: Import des Gesendet-Ordners und Status beantwortet/erledigt aus dem Postfach"
