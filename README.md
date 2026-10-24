@@ -8,14 +8,15 @@ Mailsync keeps Frappe's Communications in step with your IMAP mailbox:
 
 Mailsync only reads the mailbox. It never moves, flags or deletes mail and never sends email.
 
-## Install
-
-Mailsync needs Frappe v16.
+## Installation
 
 ```bash
-bench get-app https://github.com/EffizienzAgent/mailsync
-bench --site your.site install-app mailsync
+bench get-app https://github.com/EffizienzAgent/mailsync --branch version-16
+bench --site <site> install-app mailsync
 ```
+
+**Compatibility:** Frappe v16. The `version-16` branch always points to the latest release; tagged releases
+and the changelog are on the [releases page](https://github.com/EffizienzAgent/mailsync/releases).
 
 Set up an Email Account with IMAP and *Enable Incoming* as usual. Mailsync picks it up on the next run.
 
