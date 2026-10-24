@@ -41,7 +41,7 @@ jobs:
           GREENMAIL_OPTS: -Dgreenmail.setup.test.all -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.auth.disabled
       dovecot:
         image: dovecot/dovecot:2.4.1
-        ports: ['31143:31143']
+        ports: ['31143:31143', '31587:31587', '31465:31465']
         env:
           USER_PASSWORD: secret
     steps:
@@ -105,4 +105,5 @@ jobs:
           MAILSYNC_TEST_IMAP_PORT: '3143'
           MAILSYNC_TEST_STARTTLS_HOST: 127.0.0.1
           MAILSYNC_TEST_STARTTLS_PORT: '31143'
+          MAILSYNC_TEST_SMTP_HOST: 127.0.0.1
         run: cd ~/frappe-bench && bench --site "$SITE" run-tests --app mailsync
