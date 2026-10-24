@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/EffizienzAgent/mailsync/compare/v0.1.1...v0.1.2) (2026-10-24)
+
+
+### Bug Fixes
+
+* **tls:** verify the server certificate on outgoing SMTP ([4379315](https://github.com/EffizienzAgent/mailsync/commit/43793153aad400fbe0d39df936833507825be9d9))
+
 ## [0.1.1](https://github.com/EffizienzAgent/mailsync/compare/v0.1.0...v0.1.1) (2026-10-24)
 
 
