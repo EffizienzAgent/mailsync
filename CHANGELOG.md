@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/EffizienzAgent/mailsync/compare/v0.1.2...v0.2.0) (2026-10-25)
+
+
+### Features
+
+* **hooks:** pass raw mails read from IMAP to mailsync_mail_read ([7cbb807](https://github.com/EffizienzAgent/mailsync/commit/7cbb807f82511703a202fc189c15131102eb51b6))
+
 ## [0.1.2](https://github.com/EffizienzAgent/mailsync/compare/v0.1.1...v0.1.2) (2026-10-24)
 
 
