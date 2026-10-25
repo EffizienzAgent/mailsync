@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2](https://github.com/EffizienzAgent/mailsync/compare/v0.2.1...v0.2.2) (2026-10-25)
+
+
+### Bug Fixes
+
+* document mail read hook limits and sensitive raw mail ([c1fc483](https://github.com/EffizienzAgent/mailsync/commit/c1fc483c8a6fe2a32a5cdc091834ae389aa3b2d9))
+* keep the Sent sync going when a mail read hook commits and raises ([83500f4](https://github.com/EffizienzAgent/mailsync/commit/83500f430f9563a978de19f26103835902a23774))
+
 ## [0.2.1](https://github.com/EffizienzAgent/mailsync/compare/v0.2.0...v0.2.1) (2026-10-25)
 
 
