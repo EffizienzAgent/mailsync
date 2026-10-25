@@ -96,6 +96,10 @@ def mail_read(communication, raw: bytes, account: str, folder: str, sent_or_rece
 
 Each mail is passed on once, when Mailsync first reads its UID. Mails that are already in the folder on the first run are never passed on; a mail that is moved or copied into the folder later gets a new UID and is passed on then, whatever its date. The same mail is passed on again only when it lands in the folder a second time or when two Email Accounts read the same mailbox, so make the method idempotent. Every call runs in its own savepoint: if the method raises, its database writes are rolled back, the error is logged and the sync goes on.
 
+Hooks run synchronously inside the sync job, which has a 600 second timeout for the whole account. Keep them fast and enqueue heavy work, such as uploads, as a job of your own. Do not call `frappe.db.commit()` in a hook: Mailsync commits once per step, and a commit ends the savepoint. If a hook commits and then raises, Mailsync rolls back the open transaction, logs the error and goes on with the batch.
+
+`raw` is the complete mail, including the Bcc header and all attachments. Treat it as sensitive: restrict who can read what you store and never log it.
+
 ## Development
 
 Tests run on a bench with a test site:
