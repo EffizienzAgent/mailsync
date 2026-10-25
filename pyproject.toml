@@ -1,6 +1,6 @@
 [project]
 name = "mailsync"
-authors = [{ name = "EffizienzAgent" }]
+authors = [{ name = "EffizienzAgent (Tobias Mende)" }]
 description = "IMAP mail sync: Sent folder import and reply/close status from the mailbox"
 requires-python = ">=3.14"
 readme = "README.md"
