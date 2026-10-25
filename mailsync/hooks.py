@@ -1,6 +1,6 @@
 app_name = "mailsync"
 app_title = "Mailsync"
-app_publisher = "EffizienzAgent"
+app_publisher = "EffizienzAgent (Tobias Mende)"
 app_description = "IMAP mail sync: Sent folder import and reply/close status from the mailbox"
 app_license = "mit"
 
