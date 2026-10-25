@@ -8,3 +8,4 @@ Mailsync,Mailsync
 Mail status search failed: {0},Statussuche im Postfach fehlgeschlagen: {0}
 Sent folder status missing: {0},Status des Gesendet-Ordners fehlt: {0}
 Sent mail skipped: {0} UID {1},Gesendete E-Mail übersprungen: {0} UID {1}
+Mail read hook failed: {0},Hook für gelesene E-Mail fehlgeschlagen: {0}
