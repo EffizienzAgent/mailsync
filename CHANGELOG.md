@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.3](https://github.com/EffizienzAgent/mailsync/compare/v0.2.2...v0.2.3) (2026-10-25)
+
+
+### Bug Fixes
+
+* **outgoing:** harden References header against bad ids and log failures ([ab936e3](https://github.com/EffizienzAgent/mailsync/commit/ab936e3a418cc68725875cdc3ab1ba72f9cf82fa))
+* **outgoing:** set References header on replies ([8958572](https://github.com/EffizienzAgent/mailsync/commit/8958572bb1ca75437e273afeb6de8cd941d0240b))
+
 ## [0.2.2](https://github.com/EffizienzAgent/mailsync/compare/v0.2.1...v0.2.2) (2026-10-25)
 
 
