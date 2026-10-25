@@ -6,6 +6,7 @@ app_license = "mit"
 
 before_request = ["mailsync.tls.apply"]
 before_job = ["mailsync.tls.apply"]
+make_email_body_message = ["mailsync.references.set_references"]
 
 scheduler_events = {
 	"cron": {
