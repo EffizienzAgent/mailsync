@@ -76,6 +76,26 @@ def status_changed(changes: dict[str, str]) -> None:
 	frappe.publish_realtime("inbox_changed", after_commit=True)
 ```
 
+### `mailsync_mail_read`
+
+Called for every mail Mailsync reads from the mailbox, today the Sent folder, with the original bytes of the mail. Use it to archive the original `.eml`.
+
+```python
+mailsync_mail_read = ["myapp.mail.mail_read"]
+
+
+def mail_read(communication, raw: bytes, account: str, folder: str, sent_or_received: str, **kwargs) -> None:
+	archive(communication.name, raw)
+```
+
+- `communication`: the Communication document. For a newly imported mail it is called after the Communication is inserted. For a mail that Frappe already knows (its Message-ID belongs to the site or to an existing Communication), it gets the existing Sent Communication with that Message-ID. Mails that are only in the Email Queue have no Communication and are not passed on.
+- `raw`: the mail as read from the server. Mails over 25 MB are skipped and never passed on.
+- `account`: the name of the Email Account.
+- `folder`: the IMAP folder the mail was read from.
+- `sent_or_received`: `"Sent"` or `"Received"`, as on Communication. Today always `"Sent"`.
+
+The same mail can be passed on again, for example after the folder's UIDVALIDITY changed, so make the method idempotent. Every call runs in its own savepoint: if the method raises, its database writes are rolled back, the error is logged and the sync goes on.
+
 ## Development
 
 Tests run on a bench with a test site:

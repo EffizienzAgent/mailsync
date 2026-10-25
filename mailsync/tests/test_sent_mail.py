@@ -12,7 +12,10 @@ from mailsync.tests.factories import hooks, make_account, make_mail, unique
 
 SENT = "INBOX.Sent"
 LINK_HOOK = "mailsync.tests.test_sent_mail.link_to_todo"
+READ_HOOK = "mailsync.tests.test_sent_mail.record_read"
+FAILING_READ_HOOK = "mailsync.tests.test_sent_mail.failing_read"
 ADDRESSES = []
+READ = []
 
 
 def raw_mail(sender, to, subject, message_id, cc=None, in_reply_to=None):
@@ -86,12 +89,24 @@ def link_to_todo(address):
 	return [{"link_doctype": "ToDo", "link_name": todo}] if todo else []
 
 
+def record_read(**kwargs):
+	READ.append(kwargs)
+
+
+def failing_read(communication, **kwargs):
+	frappe.get_doc({"doctype": "ToDo", "description": f"partial {communication.name}"}).insert(
+		ignore_permissions=True
+	)
+	raise ValueError("consumer broken")
+
+
 class TestSentMail(IntegrationTestCase):
 	def setUp(self):
 		self.account = make_account()
 		self.account.db_set("create_contact", 0)
 		self.address = self.account.email_id
 		ADDRESSES.clear()
+		READ.clear()
 
 	def sync(self, imap):
 		return sent_mail.sync(self.account, imap)
@@ -296,3 +311,81 @@ class TestSentMail(IntegrationTestCase):
 			self.assertEqual(len(self.sync(imap)), 2)
 			self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 2)
 			self.assertEqual(len(self.sync(imap)), 1)
+
+	def app_communication(self, message_id):
+		return frappe.get_doc(
+			{
+				"doctype": "Communication",
+				"communication_medium": "Email",
+				"sent_or_received": "Sent",
+				"subject": "From the app",
+				"sender": self.address,
+				"recipients": "customer@example.com",
+				"message_id": message_id,
+			}
+		).insert(ignore_permissions=True)
+
+	def test_read_hook_gets_imported_mail(self):
+		imap = self.started()
+		raw = self.mail("someone@example.com", unique("Archived"))
+		imap.add(1, raw)
+		with hooks("mailsync_mail_read", [READ_HOOK]):
+			[name] = self.sync(imap)
+		[call] = READ
+		self.assertEqual(call.pop("communication").name, name)
+		self.assertEqual(
+			call, {"raw": raw, "account": self.account.name, "folder": SENT, "sent_or_received": "Sent"}
+		)
+
+	def test_read_hook_gets_existing_communication(self):
+		known = self.app_communication(f"{uuid.uuid4().hex}@other.example")
+		site = self.app_communication(f"{uuid.uuid4().hex}@{frappe.local.site}")
+		imap = self.started()
+		imap.add(1, self.mail("customer@example.com", "From the app", message_id=known.message_id))
+		imap.add(2, self.mail("customer@example.com", "From the app", message_id=site.message_id))
+		with hooks("mailsync_mail_read", [READ_HOOK]):
+			self.assertEqual(self.sync(imap), [])
+		self.assertEqual([call["communication"].name for call in READ], [known.name, site.name])
+		self.assertEqual(frappe.db.count("Communication", {"message_id": known.message_id}), 1)
+
+	def test_read_hook_skips_queue_only_mails(self):
+		message_id = f"{uuid.uuid4().hex}@queue.example"
+		frappe.get_doc(
+			{
+				"doctype": "Email Queue",
+				"sender": self.address,
+				"message_id": f"<{message_id}>",
+				"status": "Sent",
+				"recipients": [{"recipient": "customer@example.com", "status": "Sent"}],
+			}
+		).db_insert()
+		imap = self.started()
+		imap.add(1, self.mail("customer@example.com", "Queued", message_id=message_id))
+		imap.add(2, self.mail("customer@example.com", "Site", message_id=f"x@{frappe.local.site}"))
+		with hooks("mailsync_mail_read", [READ_HOOK]):
+			self.assertEqual(self.sync(imap), [])
+		self.assertEqual(READ, [])
+
+	def test_failing_read_hook_is_rolled_back_and_logged(self):
+		imap = self.started()
+		imap.add(1, self.mail("a@example.com", unique("First")))
+		imap.add(2, self.mail("b@example.com", unique("Second")))
+		with (
+			hooks("mailsync_mail_read", [FAILING_READ_HOOK, READ_HOOK]),
+			patch.object(frappe, "log_error") as log,
+		):
+			names = self.sync(imap)
+		self.assertEqual(len(names), 2)
+		self.assertTrue(all(frappe.db.exists("Communication", name) for name in names))
+		self.assertEqual([call["communication"].name for call in READ], names)
+		self.assertFalse(frappe.db.exists("ToDo", {"description": ("like", "partial %")}))
+		self.assertEqual(log.call_count, 2)
+		self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 2)
+
+	def test_read_hook_skips_oversized_mails(self):
+		imap = self.started()
+		imap.add(1, self.mail("a@example.com", unique("Huge")))
+		imap.sizes = {1: sent_mail.MAX_MAIL_BYTES + 1}
+		with hooks("mailsync_mail_read", [READ_HOOK]), patch.object(frappe, "log_error"):
+			self.assertEqual(self.sync(imap), [])
+		self.assertEqual(READ, [])

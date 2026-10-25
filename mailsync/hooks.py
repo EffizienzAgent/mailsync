@@ -16,3 +16,4 @@ scheduler_events = {
 # Apps can extend mailsync with these hooks:
 # mailsync_recipient_links = ["myapp.mail.recipient_links"]
 # mailsync_status_changed = ["myapp.mail.status_changed"]
+# mailsync_mail_read = ["myapp.mail.mail_read"]

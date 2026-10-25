@@ -40,6 +40,14 @@ class SentMail(InboundMail):
 			)
 		)
 
+	def existing_communication(self):
+		if not self.message_id:
+			return None
+		name = frappe.db.get_value(
+			"Communication", {"message_id": self.message_id, "sent_or_received": "Sent"}
+		)
+		return frappe.get_doc("Communication", name) if name else None
+
 	def as_dict(self):
 		data = super().as_dict()
 		data["sent_or_received"] = "Sent"
@@ -85,7 +93,28 @@ def store(mail):
 		frappe.db.rollback(save_point="sent_mail")
 		frappe.log_error(title=_("Sent mail import failed: {0}").format(mail.message_id))
 		return None
-	return communication.name if communication else None
+	if communication:
+		mail_read(mail, communication)
+		return communication.name
+	if existing := mail.existing_communication():
+		mail_read(mail, existing)
+	return None
+
+
+def mail_read(mail, communication):
+	for method in frappe.get_hooks("mailsync_mail_read"):
+		frappe.db.savepoint("mail_read")
+		try:
+			frappe.get_attr(method)(
+				communication=communication,
+				raw=mail.raw_message,
+				account=mail.email_account.name,
+				folder=mail.folder,
+				sent_or_received="Sent",
+			)
+		except Exception:
+			frappe.db.rollback(save_point="mail_read")
+			frappe.log_error(title=_("Mail read hook failed: {0}").format(method))
 
 
 def fetch_new(imap, account):
