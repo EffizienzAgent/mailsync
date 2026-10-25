@@ -94,7 +94,7 @@ def mail_read(communication, raw: bytes, account: str, folder: str, sent_or_rece
 - `folder`: the IMAP folder the mail was read from.
 - `sent_or_received`: `"Sent"` or `"Received"`, as on Communication. Today always `"Sent"`.
 
-The same mail can be passed on again, for example after the folder's UIDVALIDITY changed, so make the method idempotent. Every call runs in its own savepoint: if the method raises, its database writes are rolled back, the error is logged and the sync goes on.
+Each mail is passed on once, when Mailsync first reads its UID. Mails that are already in the folder on the first run are never passed on; a mail that is moved or copied into the folder later gets a new UID and is passed on then, whatever its date. The same mail is passed on again only when it lands in the folder a second time or when two Email Accounts read the same mailbox, so make the method idempotent. Every call runs in its own savepoint: if the method raises, its database writes are rolled back, the error is logged and the sync goes on.
 
 ## Development
 
