@@ -1,9 +1,13 @@
+import re
+
 import frappe
 from frappe import _
 
 MAX_IDS = 20
-MAX_DEPTH = 50
+MAX_DEPTH = MAX_IDS * 2
 MAX_LINE = 998
+VALID_ID = re.compile(r"[\x21-\x3b\x3d\x3f-\x7e]+")
+BRACKETED = re.compile(r"<([^<>]*)>")
 
 
 def set_references(mail):
@@ -11,11 +15,24 @@ def set_references(mail):
 	try:
 		if mail.msg_root["References"]:
 			return
-		parent = bare(mail.msg_root["In-Reply-To"])
+		parent = last_id(mail.msg_root["In-Reply-To"])
 		if parent and (value := header(references(parent))):
 			mail.set_header("References", value)
 	except Exception:
+		log_failure()
+
+
+def log_failure():
+	try:
 		frappe.log_error(title=_("References header failed"))
+	except Exception:
+		pass
+
+
+def last_id(value):
+	value = str(value or "")
+	candidates = BRACKETED.findall(value) or [value]
+	return next((mid for mid in map(bare, reversed(candidates)) if mid), "")
 
 
 def references(parent_id):
@@ -60,9 +77,10 @@ def header(ids):
 
 
 def too_long(ids):
-	"""Frappe writes headers without folding, so the whole line must fit."""
+	"""Message.as_string() defaults to maxheaderlen=0, so Frappe's headers are not folded and must fit one line."""
 	return len(f"References: {header(ids)}") > MAX_LINE
 
 
 def bare(message_id):
-	return (message_id or "").strip().strip("<>").strip()
+	mid = (message_id or "").strip().strip("<>").strip()
+	return mid if VALID_ID.fullmatch(mid) else ""

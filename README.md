@@ -32,7 +32,7 @@ Set up an Email Account with IMAP and *Enable Incoming* as usual. Mailsync picks
 
 ## Reply threading
 
-Frappe sets only `In-Reply-To` on outgoing replies. Mailsync adds a `References` header as RFC 5322 asks, so mail clients keep the whole thread. It finds the Communication with the parent's Message-ID and follows its *In Reply To* links up to the first mail of the thread. The header lists the Message-IDs from the oldest to the parent. Long threads keep the first mail and the 19 newest, and the header line stays within 998 characters. Message-IDs that Frappe never stored, for example the `References` of a received mail, are not known and are left out. If anything goes wrong, the error is logged and the mail is sent without `References`.
+Frappe sets only `In-Reply-To` on outgoing replies. Mailsync adds a `References` header as RFC 5322 asks, so mail clients keep the whole thread. It finds the Communication with the parent's Message-ID and follows its *In Reply To* links up to the first mail of the thread. The header lists the Message-IDs from the oldest to the parent. Long threads keep the first mail and the 19 newest, and the header line stays within 998 characters, because Frappe writes headers without folding. Message-IDs that are not plain printable ASCII without spaces or angle brackets are skipped; if `In-Reply-To` holds several ids, the last one is the parent. Message-IDs that Frappe never stored, for example the `References` of a received mail, are not known and are left out. If anything goes wrong, the error is logged and the mail is sent without `References`.
 
 ## TLS
 

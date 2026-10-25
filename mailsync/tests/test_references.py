@@ -37,7 +37,7 @@ def chain(length):
 	return ids
 
 
-def reply(in_reply_to=None):
+def raw_reply(in_reply_to=None, bracket=True):
 	mail = get_email(
 		recipients=["customer@example.com"],
 		sender="me@example.test",
@@ -47,8 +47,12 @@ def reply(in_reply_to=None):
 	)
 	mail.set_message_id(None)
 	if in_reply_to:
-		mail.set_in_reply_to(f"<{in_reply_to}>")
-	return message_from_string(mail.as_string())
+		mail.set_in_reply_to(f"<{in_reply_to}>" if bracket else in_reply_to)
+	return mail.as_string()
+
+
+def reply(in_reply_to=None, bracket=True):
+	return message_from_string(raw_reply(in_reply_to, bracket))
 
 
 def header(ids):
@@ -93,10 +97,11 @@ class TestReferences(IntegrationTestCase):
 		parent = None
 		for mid in ids:
 			parent = communication(mid, parent).name
-		mail = reply(ids[-1])
+		raw = raw_reply(ids[-1])
+		mail = message_from_string(raw)
 		self.assertEqual(mail["References"].split()[0], f"<{ids[0]}>")
 		self.assertEqual(mail["References"].split()[-1], f"<{ids[-1]}>")
-		self.assertLessEqual(len(f"References: {mail['References']}"), references.MAX_LINE)
+		self.assertTrue(all(len(line) <= references.MAX_LINE for line in raw.splitlines()))
 
 	def test_cycle_ends(self):
 		first, second = message_id(), message_id()
@@ -110,3 +115,29 @@ class TestReferences(IntegrationTestCase):
 			mail = reply(message_id())
 		self.assertIsNone(mail["References"])
 		self.assertIsNotNone(mail["In-Reply-To"])
+
+	def test_failing_log_still_builds_mail(self):
+		with (
+			patch.object(references, "parent_communication", side_effect=Exception("boom")),
+			patch.object(frappe, "log_error", side_effect=Exception("db down")),
+		):
+			mail = reply(message_id())
+		self.assertIsNone(mail["References"])
+		self.assertIsNotNone(mail["In-Reply-To"])
+
+	def test_invalid_ids_are_skipped(self):
+		root, parent = message_id(), message_id()
+		bad = [f"in ner{message_id()}", f"a>b{message_id()}", f"\u00fc{message_id()}"]
+		name = communication(root).name
+		for mid in bad:
+			name = communication(mid, name).name
+		communication(parent, name)
+		self.assertEqual(reply(parent)["References"], header([root, parent]))
+
+	def test_invalid_in_reply_to_adds_nothing(self):
+		self.assertIsNone(reply("in ner@example.com")["References"])
+
+	def test_last_of_several_in_reply_to_ids_is_parent(self):
+		ids = chain(2)
+		other = message_id()
+		self.assertEqual(reply(f"<{other}> <{ids[-1]}>", bracket=False)["References"], header(ids))
