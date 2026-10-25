@@ -96,7 +96,7 @@ def store(mail):
 	if communication:
 		mail_read(mail, communication)
 		return communication.name
-	if existing := mail.existing_communication():
+	if frappe.get_hooks("mailsync_mail_read") and (existing := mail.existing_communication()):
 		mail_read(mail, existing)
 	return None
 
@@ -113,8 +113,16 @@ def mail_read(mail, communication):
 				sent_or_received="Sent",
 			)
 		except Exception:
-			frappe.db.rollback(save_point="mail_read")
+			undo_hook(method)
 			frappe.log_error(title=_("Mail read hook failed: {0}").format(method))
+
+
+def undo_hook(method):
+	try:
+		frappe.db.rollback(save_point="mail_read")
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error(title=_("Mail read hook rollback failed: {0}").format(method))
 
 
 def fetch_new(imap, account):

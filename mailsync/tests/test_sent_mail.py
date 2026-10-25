@@ -14,6 +14,7 @@ SENT = "INBOX.Sent"
 LINK_HOOK = "mailsync.tests.test_sent_mail.link_to_todo"
 READ_HOOK = "mailsync.tests.test_sent_mail.record_read"
 FAILING_READ_HOOK = "mailsync.tests.test_sent_mail.failing_read"
+COMMITTING_READ_HOOK = "mailsync.tests.test_sent_mail.commit_then_fail"
 ADDRESSES = []
 READ = []
 
@@ -98,6 +99,11 @@ def failing_read(communication, **kwargs):
 		ignore_permissions=True
 	)
 	raise ValueError("consumer broken")
+
+
+def commit_then_fail(communication, **kwargs):
+	frappe.db.commit()
+	failing_read(communication)
 
 
 class TestSentMail(IntegrationTestCase):
@@ -382,6 +388,17 @@ class TestSentMail(IntegrationTestCase):
 		self.assertEqual(log.call_count, 2)
 		self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 2)
 
+	def test_known_mails_are_not_looked_up_without_read_hook(self):
+		known = self.app_communication(f"{uuid.uuid4().hex}@other.example")
+		imap = self.started()
+		imap.add(1, self.mail("customer@example.com", "From the app", message_id=known.message_id))
+		with (
+			hooks("mailsync_mail_read", []),
+			patch.object(sent_mail.SentMail, "existing_communication") as lookup,
+		):
+			self.assertEqual(self.sync(imap), [])
+		lookup.assert_not_called()
+
 	def test_read_hook_skips_oversized_mails(self):
 		imap = self.started()
 		imap.add(1, self.mail("a@example.com", unique("Huge")))
@@ -389,3 +406,38 @@ class TestSentMail(IntegrationTestCase):
 		with hooks("mailsync_mail_read", [READ_HOOK]), patch.object(frappe, "log_error"):
 			self.assertEqual(self.sync(imap), [])
 		self.assertEqual(READ, [])
+
+
+class TestCommittingReadHook(IntegrationTestCase):
+	def setUp(self):
+		self.account = make_account()
+		self.account.db_set("create_contact", 0)
+		READ.clear()
+		self.addCleanup(self.remove_committed)
+
+	def remove_committed(self):
+		frappe.db.rollback()
+		for name in frappe.get_all("Communication", {"email_account": self.account.name}, pluck="name"):
+			frappe.db.delete("ToDo", {"description": ("like", f"% {name}")})
+			frappe.delete_doc("Communication", name, force=True, ignore_permissions=True)
+		frappe.db.delete("DefaultValue", {"defkey": sent_mail.STATE_KEY.format(self.account.name)})
+		frappe.delete_doc("Email Account", self.account.name, force=True, ignore_permissions=True)
+		frappe.db.commit()
+
+	def test_batch_completes_when_hook_commits_and_raises(self):
+		imap = FakeImap()
+		sent_mail.sync(self.account, imap)
+		for uid in (1, 2):
+			message_id = f"{uuid.uuid4().hex}@mail.example"
+			imap.add(uid, raw_mail(self.account.email_id, "a@example.com", unique("Mail"), message_id))
+		with (
+			hooks("mailsync_mail_read", [COMMITTING_READ_HOOK, READ_HOOK]),
+			patch.object(frappe, "log_error") as log,
+		):
+			names = sent_mail.sync(self.account, imap)
+		self.assertEqual(len(names), 2)
+		self.assertTrue(all(frappe.db.exists("Communication", name) for name in names))
+		self.assertEqual([call["communication"].name for call in READ], names)
+		self.assertFalse(frappe.db.exists("ToDo", {"description": ("like", "partial %")}))
+		self.assertEqual(log.call_count, 4)
+		self.assertEqual(sent_mail.load_state(self.account.name)["uid"], 2)
