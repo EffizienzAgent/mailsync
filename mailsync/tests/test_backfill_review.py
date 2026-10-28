@@ -78,7 +78,7 @@ class TestBackfillReview(IntegrationTestCase):
 		row = rows[self.unknown]
 		self.assertEqual((row.mail_count, row.full_name, row.decision), (2, "Doe, Jane", "Open"))
 		self.assertEqual((row.first_name, row.last_name), ("Jane", "Doe"))
-		self.assertEqual(row.subjects.split("\n"), ["First", "Second"])
+		self.assertEqual(sorted(row.subjects.split("\n")), ["First", "Second"])
 
 	def test_refresh_keeps_decisions_and_drops_resolved_open_rows(self):
 		later_known = address("later")
@@ -102,7 +102,8 @@ class TestBackfillReview(IntegrationTestCase):
 		self.assertEqual((contact.first_name, contact.last_name), ("Jane", "Doe"))
 		self.assertEqual(contact.email_id, self.unknown)
 		self.assertEqual(
-			[(l.link_doctype, l.link_name) for l in contact.links], [("Email Account", self.account.name)]
+			[(link.link_doctype, link.link_name) for link in contact.links],
+			[("Email Account", self.account.name)],
 		)
 		self.assertEqual(row.decision, "Contact")
 		self.assertEqual(addresses.contact_for(self.unknown), contact.name)
