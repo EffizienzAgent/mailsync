@@ -11,3 +11,6 @@ Sent mail skipped: {0} UID {1},Gesendete E-Mail übersprungen: {0} UID {1}
 Mail read hook failed: {0},Hook für gelesene E-Mail fehlgeschlagen: {0}
 Mail read hook rollback failed: {0},Rücksetzen nach Hook für gelesene E-Mail fehlgeschlagen: {0}
 References header failed,References-Header fehlgeschlagen
+You cannot import from {0},Sie dürfen nicht aus {0} importieren
+Only IMAP accounts can be imported from,Nur aus IMAP-Konten kann importiert werden
+From Date must be before To Date,Das Von-Datum muss vor dem Bis-Datum liegen
