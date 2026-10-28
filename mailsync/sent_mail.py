@@ -101,7 +101,7 @@ def store(mail):
 	return None
 
 
-def mail_read(mail, communication):
+def mail_read(mail, communication, sent_or_received="Sent"):
 	for method in frappe.get_hooks("mailsync_mail_read"):
 		frappe.db.savepoint("mail_read")
 		try:
@@ -110,7 +110,7 @@ def mail_read(mail, communication):
 				raw=mail.raw_message,
 				account=mail.email_account.name,
 				folder=mail.folder,
-				sent_or_received="Sent",
+				sent_or_received=sent_or_received,
 			)
 		except Exception:
 			undo_hook(method)
