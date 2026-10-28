@@ -3,15 +3,19 @@ import os
 import time
 import unittest
 import uuid
+from datetime import datetime
 from email.message import EmailMessage
 from email.utils import format_datetime
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import now_datetime
 
 from mailsync import mail_sync, sent_mail
-from mailsync.tests.factories import unique
+from mailsync.backfill import addresses, jobs
+from mailsync.tests.factories import make_contact, make_import, unique
+from mailsync.tests.fake_mailbox import raw_mail
 
 HOST = os.environ.get("MAILSYNC_TEST_IMAP_HOST")
 PORT = int(os.environ.get("MAILSYNC_TEST_IMAP_PORT", "3143"))
@@ -108,3 +112,46 @@ class TestImapServer(IntegrationTestCase):
 
 		self.sync()
 		self.assertEqual(len(self.communications()), 3)
+
+	def test_backfill_end_to_end(self):
+		addresses.clear()
+		customer = f"{uuid.uuid4().hex[:10]}@customer.example"
+		spammer = f"{uuid.uuid4().hex[:10]}@spam.example"
+		make_contact(customer)
+		self.imap.create("Kunden")
+		self.imap.create("Kunden.Acme")
+		recent, old = datetime(2024, 5, 1, 10), datetime(2019, 5, 1, 10)
+		wanted = f"{uuid.uuid4().hex}@customer.example"
+		self.append("INBOX", raw_mail(customer, self.address, "Wanted", wanted, sent=recent))
+		self.append(
+			"Kunden.Acme", raw_mail(spammer, self.address, "Spam", f"{uuid.uuid4().hex}@x", sent=recent)
+		)
+		self.append(
+			"Kunden.Acme", raw_mail(customer, self.address, "Too old", f"{uuid.uuid4().hex}@x", sent=old)
+		)
+		self.account.db_set("enable_incoming", 0)
+		doc = make_import(self.account.name, from_date="2020-01-01")
+		self.assertIn("Kunden.Acme", doc.load_folders())
+		doc.append("folders", {"folder": "INBOX"})
+		doc.append("folders", {"folder": "Kunden.Acme"})
+		doc.save(ignore_permissions=True)
+
+		def step(name):
+			with patch.object(jobs, "enqueue"):
+				jobs.start(doc.name, name)
+			jobs.work(doc.name, name)
+			doc.reload()
+
+		step("scan")
+		self.assertEqual((doc.status, doc.total, doc.pending), ("Review", 2, 2))
+		[row] = frappe.get_all("Mail Import Address", filters={"mail_import": doc.name}, pluck="name")
+		frappe.get_doc("Mail Import Address", row).ignore()
+		step("import")
+		self.assertEqual((doc.status, doc.imported, doc.filtered), ("Done", 1, 1))
+		[communication] = self.communications(message_id=wanted)
+		self.assertEqual((communication.status, communication.sent_or_received), ("Closed", "Received"))
+
+		for folder in ("INBOX", "Kunden.Acme"):
+			self.imap.select(folder, readonly=True)
+			_, data = self.imap.fetch("1:*", "(FLAGS)")
+			self.assertFalse(any(b"\\Seen" in part for part in data), folder)

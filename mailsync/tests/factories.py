@@ -54,3 +54,40 @@ def hooks(name, methods):
 
 	with patch.object(frappe, "get_hooks", side_effect=get_hooks):
 		yield
+
+
+def make_user(accounts=(), roles=("Desk User",)):
+	return (
+		frappe.get_doc(
+			{
+				"doctype": "User",
+				"email": f"{unique('user').replace(' ', '')}@example.test",
+				"first_name": "Test",
+				"send_welcome_email": 0,
+				"roles": [{"role": role} for role in roles],
+				"user_emails": [{"email_account": account} for account in accounts],
+			}
+		)
+		.insert(ignore_permissions=True)
+		.name
+	)
+
+
+def make_import(account, **fields):
+	return frappe.get_doc({"doctype": "Mail Import", "email_account": account, **fields}).insert(
+		ignore_permissions=True
+	)
+
+
+def make_contact(*emails, first_name="Jane", links=()):
+	contact = frappe.get_doc(
+		{
+			"doctype": "Contact",
+			"first_name": first_name,
+			"last_name": unique("Doe"),
+			"links": [{"link_doctype": doctype, "link_name": name} for doctype, name in links],
+		}
+	)
+	for i, email in enumerate(emails):
+		contact.add_email(email, is_primary=not i)
+	return contact.insert(ignore_permissions=True).name

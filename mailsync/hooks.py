@@ -8,6 +8,17 @@ before_request = ["mailsync.tls.apply"]
 before_job = ["mailsync.tls.apply"]
 make_email_body_message = ["mailsync.references.set_references"]
 
+has_permission = {
+	"Mail Import": "mailsync.backfill.access.has_permission",
+	"Mail Import Message": "mailsync.backfill.access.has_permission",
+	"Mail Import Address": "mailsync.backfill.access.has_permission",
+}
+permission_query_conditions = {
+	"Mail Import": "mailsync.backfill.access.query_conditions",
+	"Mail Import Message": "mailsync.backfill.access.message_conditions",
+	"Mail Import Address": "mailsync.backfill.access.address_conditions",
+}
+
 scheduler_events = {
 	"cron": {
 		"*/2 * * * *": ["mailsync.mail_sync.sync_all"],
@@ -18,3 +29,6 @@ scheduler_events = {
 # mailsync_recipient_links = ["myapp.mail.recipient_links"]
 # mailsync_status_changed = ["myapp.mail.status_changed"]
 # mailsync_mail_read = ["myapp.mail.mail_read"]
+# mailsync_own_address = ["myapp.mail.is_own"]
+# mailsync_address_suggestion = ["myapp.mail.suggest"]
+# mailsync_contact_link_doctype = "Customer"

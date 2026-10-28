@@ -11,3 +11,35 @@ Sent mail skipped: {0} UID {1},Gesendete E-Mail übersprungen: {0} UID {1}
 Mail read hook failed: {0},Hook für gelesene E-Mail fehlgeschlagen: {0}
 Mail read hook rollback failed: {0},Rücksetzen nach Hook für gelesene E-Mail fehlgeschlagen: {0}
 References header failed,References-Header fehlgeschlagen
+You cannot import from {0},Sie dürfen nicht aus {0} importieren
+Only IMAP accounts can be imported from,Nur aus IMAP-Konten kann importiert werden
+From Date must be before To Date,Das Von-Datum muss vor dem Bis-Datum liegen
+Address suggestion failed: {0},Vorschlag für Adresse fehlgeschlagen: {0}
+Choose a contact,Wählen Sie einen Kontakt
+Create Contact,Kontakt anlegen
+Add to Contact,Zu Kontakt hinzufügen
+"Folders changed on the server, scan again: {0}","Ordner auf dem Server geändert, bitte erneut scannen: {0}"
+Mail not found on the server,E-Mail auf dem Server nicht gefunden
+Mail import failed: {0},Import der E-Mail fehlgeschlagen: {0}
+This import is already running,Dieser Import läuft bereits
+Choose at least one folder,Wählen Sie mindestens einen Ordner
+Choose Folders,Ordner wählen
+Review Addresses,Adressen prüfen
+Mail Import,E-Mail-Import
+Mail Import Folder,E-Mail-Import-Ordner
+Mail Import Message,E-Mail-Import-Nachricht
+Mail Import Address,E-Mail-Import-Adresse
+Mail Ignored Address,Ignorierte E-Mail-Adresse
+Already Present,Bereits vorhanden
+Filtered Out,Ausgefiltert
+Too Large,Zu groß
+Scanned UID,Gescannte UID
+Scan Done,Scan fertig
+Name in Mail,Name in der E-Mail
+Suggested Contact,Vorgeschlagener Kontakt
+Mail scan failed: {0} UID {1},Scan der E-Mail fehlgeschlagen: {0} UID {1}
+Own address check failed: {0},Prüfung auf eigene Adresse fehlgeschlagen: {0}
+Recipient links failed: {0},Verknüpfungen für Empfänger fehlgeschlagen: {0}
+Address review failed: {0},Prüfung der Adresse fehlgeschlagen: {0}
+Could not log in to {0},Anmeldung bei {0} nicht möglich
+Account and dates cannot change after the first scan. Create a new import.,Konto und Zeitraum lassen sich nach dem ersten Scan nicht mehr ändern. Legen Sie einen neuen Import an.

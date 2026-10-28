@@ -30,15 +30,7 @@ class SentMail(InboundMail):
 		return self._build_communication_doc()
 
 	def is_known(self):
-		if not self.message_id:
-			return False
-		return bool(
-			self.message_id.endswith(f"@{frappe.local.site}")
-			or frappe.db.exists("Communication", {"message_id": self.message_id})
-			or frappe.db.exists(
-				"Email Queue", {"message_id": ("in", [self.message_id, f"<{self.message_id}>"])}
-			)
-		)
+		return bool(self.message_id) and known(self.message_id)
 
 	def existing_communication(self):
 		if not self.message_id:
@@ -54,6 +46,26 @@ class SentMail(InboundMail):
 		data["imap_folder"] = self.folder
 		data["timeline_links"] = recipient_links(self, self.email_account.email_id)
 		return data
+
+
+def known(message_id):
+	return bool(
+		message_id.endswith(f"@{frappe.local.site}")
+		or frappe.db.exists("Communication", {"message_id": message_id})
+		or frappe.db.exists("Email Queue", {"message_id": ("in", [message_id, f"<{message_id}>"])})
+	)
+
+
+def known_ids(message_ids):
+	ids = list(dict.fromkeys(filter(None, message_ids)))
+	if not ids:
+		return set()
+	found = {i for i in ids if i.endswith(f"@{frappe.local.site}")}
+	found |= set(frappe.get_all("Communication", filters={"message_id": ("in", ids)}, pluck="message_id"))
+	queued = frappe.get_all(
+		"Email Queue", filters={"message_id": ("in", ids + [f"<{i}>" for i in ids])}, pluck="message_id"
+	)
+	return found | {q.strip("<>") for q in queued}
 
 
 def recipient_links(mail, own_address):
@@ -101,7 +113,7 @@ def store(mail):
 	return None
 
 
-def mail_read(mail, communication):
+def mail_read(mail, communication, sent_or_received="Sent"):
 	for method in frappe.get_hooks("mailsync_mail_read"):
 		frappe.db.savepoint("mail_read")
 		try:
@@ -110,7 +122,7 @@ def mail_read(mail, communication):
 				raw=mail.raw_message,
 				account=mail.email_account.name,
 				folder=mail.folder,
-				sent_or_received="Sent",
+				sent_or_received=sent_or_received,
 			)
 		except Exception:
 			undo_hook(method)

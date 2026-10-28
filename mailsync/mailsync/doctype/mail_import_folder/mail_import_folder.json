@@ -1,0 +1,51 @@
+{
+ "actions": [],
+ "creation": "2026-10-28 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "folder",
+  "uidvalidity",
+  "scanned_uid",
+  "scan_done"
+ ],
+ "fields": [
+  {
+   "fieldname": "folder",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Folder",
+   "reqd": 1
+  },
+  {
+   "fieldname": "uidvalidity",
+   "fieldtype": "Long Int",
+   "label": "UIDVALIDITY",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scanned_uid",
+   "fieldtype": "Long Int",
+   "label": "Scanned UID",
+   "read_only": 1
+  },
+  {
+   "fieldname": "scan_done",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Scan Done",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Mailsync",
+ "name": "Mail Import Folder",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
