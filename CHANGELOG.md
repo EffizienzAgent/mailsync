@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/EffizienzAgent/mailsync/compare/v0.3.0...v0.3.1) (2026-10-28)
+
+
+### Bug Fixes
+
+* **import:** keep the import flag set while the status is set ([bd9ac54](https://github.com/EffizienzAgent/mailsync/commit/bd9ac54665f8e1db105f6ba67e320ac86619b9c0))
+* **import:** keep the import flag set while the status is set, translate Folders ([041271a](https://github.com/EffizienzAgent/mailsync/commit/041271addd541d110a0e77e615c19d17e58a8298))
+
 ## [0.3.0](https://github.com/EffizienzAgent/mailsync/compare/v0.2.3...v0.3.0) (2026-10-28)
 
 
