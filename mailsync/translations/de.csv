@@ -15,3 +15,7 @@ You cannot import from {0},Sie dürfen nicht aus {0} importieren
 Only IMAP accounts can be imported from,Nur aus IMAP-Konten kann importiert werden
 From Date must be before To Date,Das Von-Datum muss vor dem Bis-Datum liegen
 Address suggestion failed: {0},Vorschlag für Adresse fehlgeschlagen: {0}
+Choose a contact,Wählen Sie einen Kontakt
+Create Contact,Kontakt anlegen
+Add to Contact,Zu Kontakt hinzufügen
+Ignore,Ignorieren
