@@ -22,3 +22,11 @@ Ignore,Ignorieren
 "Folders changed on the server, scan again: {0}","Ordner auf dem Server geändert, bitte erneut scannen: {0}"
 Mail not found on the server,E-Mail auf dem Server nicht gefunden
 Mail import failed: {0},Import der E-Mail fehlgeschlagen: {0}
+This import is already running,Dieser Import läuft bereits
+Choose at least one folder,Wählen Sie mindestens einen Ordner
+Choose Folders,Ordner wählen
+Scan,Scannen
+Review Addresses,Adressen prüfen
+Mails,E-Mails
+Import,Importieren
+Apply,Übernehmen
