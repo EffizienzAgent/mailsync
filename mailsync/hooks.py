@@ -29,3 +29,6 @@ scheduler_events = {
 # mailsync_recipient_links = ["myapp.mail.recipient_links"]
 # mailsync_status_changed = ["myapp.mail.status_changed"]
 # mailsync_mail_read = ["myapp.mail.mail_read"]
+# mailsync_own_address = ["myapp.mail.is_own"]
+# mailsync_address_suggestion = ["myapp.mail.suggest"]
+# mailsync_contact_link_doctype = "Customer"

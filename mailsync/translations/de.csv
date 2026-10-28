@@ -18,15 +18,22 @@ Address suggestion failed: {0},Vorschlag für Adresse fehlgeschlagen: {0}
 Choose a contact,Wählen Sie einen Kontakt
 Create Contact,Kontakt anlegen
 Add to Contact,Zu Kontakt hinzufügen
-Ignore,Ignorieren
 "Folders changed on the server, scan again: {0}","Ordner auf dem Server geändert, bitte erneut scannen: {0}"
 Mail not found on the server,E-Mail auf dem Server nicht gefunden
 Mail import failed: {0},Import der E-Mail fehlgeschlagen: {0}
 This import is already running,Dieser Import läuft bereits
 Choose at least one folder,Wählen Sie mindestens einen Ordner
 Choose Folders,Ordner wählen
-Scan,Scannen
 Review Addresses,Adressen prüfen
-Mails,E-Mails
-Import,Importieren
-Apply,Übernehmen
+Mail Import,E-Mail-Import
+Mail Import Folder,E-Mail-Import-Ordner
+Mail Import Message,E-Mail-Import-Nachricht
+Mail Import Address,E-Mail-Import-Adresse
+Mail Ignored Address,Ignorierte E-Mail-Adresse
+Already Present,Bereits vorhanden
+Filtered Out,Ausgefiltert
+Too Large,Zu groß
+Scanned UID,Gescannte UID
+Scan Done,Scan fertig
+Name in Mail,Name in der E-Mail
+Suggested Contact,Vorgeschlagener Kontakt
