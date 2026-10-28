@@ -54,7 +54,7 @@ The import never creates Contacts on its own, even when the Email Account has *C
 
 Scan and import run on the `long` queue in jobs of about 20 minutes and continue in a new job until they are done. The form shows the counters and refreshes when a job finishes. If a job dies, start the step again after 25 minutes; it continues where it stopped. If a folder's UIDVALIDITY changes on the server, its mails are not imported and the import asks for a new scan.
 
-While a Communication is inserted by the import, `frappe.flags.mailsync_import` is `True`, so other apps can skip notifications or other work for old mail.
+While the import inserts a Communication and then sets it to *Closed*, `frappe.flags.mailsync_import` is `True`, so other apps can skip notifications or other work for old mail.
 
 ## TLS
 
