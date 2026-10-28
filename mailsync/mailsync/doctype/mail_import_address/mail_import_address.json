@@ -1,0 +1,150 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-28 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "mail_import",
+  "email_id",
+  "full_name",
+  "mail_count",
+  "decision",
+  "column_break_1",
+  "subjects",
+  "section_contact",
+  "first_name",
+  "last_name",
+  "suggested_contact",
+  "contact",
+  "column_break_2",
+  "link_doctype",
+  "link_name"
+ ],
+ "fields": [
+  {
+   "fieldname": "mail_import",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Mail Import",
+   "options": "Mail Import",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "email_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Email Address",
+   "options": "Email",
+   "reqd": 1
+  },
+  {
+   "fieldname": "full_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Name in Mail"
+  },
+  {
+   "fieldname": "mail_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Mails",
+   "read_only": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Decision",
+   "options": "Open\nContact\nIgnored",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "subjects",
+   "fieldtype": "Small Text",
+   "label": "Subjects",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_contact",
+   "fieldtype": "Section Break",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "first_name",
+   "fieldtype": "Data",
+   "label": "First Name"
+  },
+  {
+   "fieldname": "last_name",
+   "fieldtype": "Data",
+   "label": "Last Name"
+  },
+  {
+   "fieldname": "suggested_contact",
+   "fieldtype": "Link",
+   "label": "Suggested Contact",
+   "options": "Contact",
+   "read_only": 1
+  },
+  {
+   "fieldname": "contact",
+   "fieldtype": "Link",
+   "label": "Contact",
+   "options": "Contact"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "link_doctype",
+   "fieldtype": "Link",
+   "label": "Company Type",
+   "options": "DocType"
+  },
+  {
+   "fieldname": "link_name",
+   "fieldtype": "Dynamic Link",
+   "label": "Company",
+   "options": "link_doctype"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Mailsync",
+ "name": "Mail Import Address",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "write": 1
+  }
+ ],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "email_id"
+}

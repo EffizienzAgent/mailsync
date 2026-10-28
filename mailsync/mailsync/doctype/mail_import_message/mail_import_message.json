@@ -1,0 +1,149 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "creation": "2026-10-28 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "mail_import",
+  "state",
+  "subject",
+  "sender",
+  "mail_date",
+  "outgoing",
+  "column_break_1",
+  "folder",
+  "uidvalidity",
+  "uid",
+  "size",
+  "message_id",
+  "communication",
+  "section_participants",
+  "participants",
+  "error"
+ ],
+ "fields": [
+  {
+   "fieldname": "mail_import",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Mail Import",
+   "options": "Mail Import",
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "default": "Pending",
+   "fieldname": "state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "State",
+   "options": "Pending\nPresent\nImported\nFiltered\nToo Large\nFailed"
+  },
+  {
+   "fieldname": "subject",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Subject"
+  },
+  {
+   "fieldname": "sender",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Sender"
+  },
+  {
+   "fieldname": "mail_date",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date"
+  },
+  {
+   "fieldname": "outgoing",
+   "fieldtype": "Check",
+   "label": "Outgoing"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "folder",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Folder"
+  },
+  {
+   "fieldname": "uidvalidity",
+   "fieldtype": "Int",
+   "label": "UIDVALIDITY"
+  },
+  {
+   "fieldname": "uid",
+   "fieldtype": "Int",
+   "label": "UID"
+  },
+  {
+   "fieldname": "size",
+   "fieldtype": "Int",
+   "label": "Size"
+  },
+  {
+   "fieldname": "message_id",
+   "fieldtype": "Data",
+   "label": "Message ID"
+  },
+  {
+   "fieldname": "communication",
+   "fieldtype": "Link",
+   "label": "Communication",
+   "options": "Communication"
+  },
+  {
+   "fieldname": "section_participants",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "participants",
+   "fieldtype": "Small Text",
+   "label": "Participants"
+  },
+  {
+   "fieldname": "error",
+   "fieldtype": "Small Text",
+   "label": "Error"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-28 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Mailsync",
+ "name": "Mail Import Message",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 0,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "write": 1
+  }
+ ],
+ "read_only": 1,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "subject"
+}
