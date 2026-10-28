@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 
@@ -240,6 +242,23 @@ class TestBackfillImport(IntegrationTestCase):
 			self.run_import()
 		self.assertEqual(self.states(), ["Imported"])
 		self.assertTrue(self.communication(message_id))
+
+	def test_import_flag_set_during_status_update(self):
+		from frappe.model.document import Document
+
+		seen = []
+		original = Document.run_method
+
+		def spy(doc, method, *args, **kwargs):
+			if doc.doctype == "Communication" and method == "before_change":
+				seen.append((doc.status, frappe.flags.mailsync_import))
+			return original(doc, method, *args, **kwargs)
+
+		self.add(self.customer, self.own)
+		with patch.object(Document, "run_method", spy):
+			self.run_import()
+		self.assertIn(("Closed", True), seen)
+		self.assertFalse(frappe.flags.mailsync_import)
 
 
 def broken_hook(address):

@@ -33,11 +33,12 @@ class BackfillMail(InboundMail):
 		frappe.flags.mailsync_import = True
 		try:
 			communication = self._build_communication_doc()
+			communication.db_set(
+				{"email_account": self.email_account.name, "status": "Closed", "seen": 1},
+				update_modified=False,
+			)
 		finally:
 			frappe.flags.mailsync_import = False
-		communication.db_set(
-			{"email_account": self.email_account.name, "status": "Closed", "seen": 1}, update_modified=False
-		)
 		return communication
 
 
