@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.3.0](https://github.com/EffizienzAgent/mailsync/compare/v0.2.3...v0.3.0) (2026-10-28)
+
+
+### Features
+
+* **import:** add address rules and extension hooks ([4dd34e9](https://github.com/EffizienzAgent/mailsync/commit/4dd34e9adc06d64b50706c12913bf0b112316959))
+* **import:** add mail import doctypes and access rules ([b19609f](https://github.com/EffizienzAgent/mailsync/commit/b19609fb69332ddaf7ac68961213c0f90cfa1027))
+* **import:** import mails with known contacts as closed communications ([23c958a](https://github.com/EffizienzAgent/mailsync/commit/23c958a81a01512ddd75ebabff3361d8e7a11cb1))
+* **import:** list folders and scan headers ([afcc04f](https://github.com/EffizienzAgent/mailsync/commit/afcc04f2dca79c45df75bf2de6327a1afa7bb7e9))
+* **import:** review unknown addresses ([9d97f6b](https://github.com/EffizienzAgent/mailsync/commit/9d97f6b3c9bb6a3d0943e8a8ede2c79bf64bb739))
+* **import:** review unknown addresses ([2c7115b](https://github.com/EffizienzAgent/mailsync/commit/2c7115b0716939361d4aee9cf1d1617ec693375c))
+* **import:** run scan and import as resumable jobs ([a0ce1b2](https://github.com/EffizienzAgent/mailsync/commit/a0ce1b26a77cdb3bbfb14f7045067528b3580305))
+* **import:** translate access messages ([eabc14a](https://github.com/EffizienzAgent/mailsync/commit/eabc14a189b279f2c038d69293b9e84ef06e0b24))
+* one-off import of past mail from IMAP folders ([9718e9e](https://github.com/EffizienzAgent/mailsync/commit/9718e9e274a9c06c13623569c3e8e123a09f9b9a))
+
+
+### Bug Fixes
+
+* **import:** keep scan and review going on unusual mail and harden access ([fe1e898](https://github.com/EffizienzAgent/mailsync/commit/fe1e898c104c8db4b89fcb9822c3e1343b3220b4))
+
+
+### Documentation
+
+* add design for one-off IMAP backfill ([f2396af](https://github.com/EffizienzAgent/mailsync/commit/f2396afdcc2128be88ba6a30e6fdf554dc37acf5))
+* add implementation plan for IMAP backfill ([837fcc6](https://github.com/EffizienzAgent/mailsync/commit/837fcc67248f760601619ae049d7c83149c3a639))
+* describe importing past mail ([d8d9377](https://github.com/EffizienzAgent/mailsync/commit/d8d93773350a6582423e3caf412f6403efda4caf))
+
 ## [0.2.3](https://github.com/EffizienzAgent/mailsync/compare/v0.2.2...v0.2.3) (2026-10-25)
 
 
