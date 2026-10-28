@@ -150,3 +150,22 @@ class TestBackfillReview(IntegrationTestCase):
 		row = self.rows()[self.unknown]
 		self.assertEqual((row.suggested_contact, row.contact), (suggested, suggested))
 		self.assertEqual((row.link_doctype, row.link_name), ("Email Account", self.account.name))
+
+	def test_refresh_survives_unusual_addresses(self):
+		odd = ["jürgen@bäckerei.de", "root@localhost"]
+		add_message(self.doc.name, [(a, "") for a in odd])
+		review.refresh(self.doc)
+		self.assertEqual(sorted(self.rows()), sorted(odd))
+		for email in odd:
+			self.row(email).ignore()
+			self.assertTrue(addresses.is_ignored(email))
+
+	def test_ignore_many_requires_post(self):
+		from frappe.handler import is_valid_http_method
+
+		frappe.local.request = frappe._dict(method="GET")
+		try:
+			with self.assertRaises(frappe.PermissionError):
+				is_valid_http_method(review.ignore_many)
+		finally:
+			frappe.local.request = None

@@ -56,6 +56,18 @@ def known(message_id):
 	)
 
 
+def known_ids(message_ids):
+	ids = list(dict.fromkeys(filter(None, message_ids)))
+	if not ids:
+		return set()
+	found = {i for i in ids if i.endswith(f"@{frappe.local.site}")}
+	found |= set(frappe.get_all("Communication", filters={"message_id": ("in", ids)}, pluck="message_id"))
+	queued = frappe.get_all(
+		"Email Queue", filters={"message_id": ("in", ids + [f"<{i}>" for i in ids])}, pluck="message_id"
+	)
+	return found | {q.strip("<>") for q in queued}
+
+
 def recipient_links(mail, own_address):
 	methods = [frappe.get_attr(method) for method in frappe.get_hooks("mailsync_recipient_links")]
 	links = []

@@ -32,6 +32,7 @@ def enqueue(name, step):
 
 
 def start(name, step):
+	frappe.db.get_value("Mail Import", name, "status", for_update=True)
 	doc = frappe.get_doc("Mail Import", name)
 	doc.check_permission("write")
 	if doc.status in RUNNING.values() and not stale(doc):

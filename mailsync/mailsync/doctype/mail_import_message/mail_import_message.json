@@ -76,12 +76,12 @@
   },
   {
    "fieldname": "uidvalidity",
-   "fieldtype": "Int",
+   "fieldtype": "Long Int",
    "label": "UIDVALIDITY"
   },
   {
    "fieldname": "uid",
-   "fieldtype": "Int",
+   "fieldtype": "Long Int",
    "label": "UID"
   },
   {
@@ -91,7 +91,7 @@
   },
   {
    "fieldname": "message_id",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Message ID"
   },
   {
@@ -133,12 +133,12 @@
    "write": 1
   },
   {
-   "create": 1,
+   "create": 0,
    "delete": 0,
    "read": 1,
    "report": 1,
    "role": "Desk User",
-   "write": 1
+   "write": 0
   }
  ],
  "read_only": 1,

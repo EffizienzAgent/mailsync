@@ -6,7 +6,9 @@ frappe.ui.form.on("Mail Import", {
 	},
 
 	refresh(frm) {
-		if (frm.is_new() || ["Scanning", "Importing"].includes(frm.doc.status)) return;
+		if (frm.is_new()) return;
+		const running = ["Scanning", "Importing"].includes(frm.doc.status);
+		if (running && !frm.doc.__onload?.stale) return;
 		frm.add_custom_button(__("Choose Folders"), () => choose_folders(frm));
 		if (!frm.doc.folders.length) return;
 		frm.add_custom_button(__("Scan"), () => run(frm, "start_scan"));

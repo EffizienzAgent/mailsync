@@ -120,3 +120,10 @@ class TestBackfillJobs(IntegrationTestCase):
 		self.start("scan")
 		self.work("scan")
 		self.assertEqual(self.doc.total, 2)
+
+	def test_login_without_connection_raises_clear_error(self):
+		account = frappe.get_doc("Email Account", self.account.name)
+		with patch.object(type(account), "get_incoming_server", return_value=object()):
+			with self.assertRaises(frappe.ValidationError) as caught:
+				jobs.mailbox.login(account)
+		self.assertIn(account.name, str(caught.exception))

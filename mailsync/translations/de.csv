@@ -37,3 +37,9 @@ Scanned UID,Gescannte UID
 Scan Done,Scan fertig
 Name in Mail,Name in der E-Mail
 Suggested Contact,Vorgeschlagener Kontakt
+Mail scan failed: {0} UID {1},Scan der E-Mail fehlgeschlagen: {0} UID {1}
+Own address check failed: {0},Prüfung auf eigene Adresse fehlgeschlagen: {0}
+Recipient links failed: {0},Verknüpfungen für Empfänger fehlgeschlagen: {0}
+Address review failed: {0},Prüfung der Adresse fehlgeschlagen: {0}
+Could not log in to {0},Anmeldung bei {0} nicht möglich
+Account and dates cannot change after the first scan. Create a new import.,Konto und Zeitraum lassen sich nach dem ersten Scan nicht mehr ändern. Legen Sie einen neuen Import an.

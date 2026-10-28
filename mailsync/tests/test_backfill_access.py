@@ -61,3 +61,22 @@ class TestBackfillAccess(IntegrationTestCase):
 		pop = make_account(use_imap=0, imap_folder=[])
 		with self.assertRaises(frappe.ValidationError):
 			make_import(pop.name)
+
+	def test_account_and_dates_locked_after_draft(self):
+		self.mail_import.db_set("status", "Review")
+		self.mail_import.reload()
+		self.mail_import.from_date = "2020-01-01"
+		with self.assertRaises(frappe.ValidationError):
+			self.mail_import.save(ignore_permissions=True)
+
+	def test_delete_import_removes_rows(self):
+		frappe.delete_doc("Mail Import", self.mail_import.name, ignore_permissions=True)
+		self.assertFalse(frappe.db.exists("Mail Import Message", self.message.name))
+		self.assertFalse(frappe.db.exists("Mail Import Address", self.address.name))
+
+	def test_desk_user_cannot_edit_messages_or_read_ignore_list(self):
+		frappe.set_user(self.owner)
+		self.assertTrue(frappe.has_permission("Mail Import Message", "read", self.message))
+		self.assertFalse(frappe.has_permission("Mail Import Message", "write", self.message))
+		self.assertFalse(frappe.has_permission("Mail Ignored Address", "read"))
+		self.assertTrue(frappe.has_permission("Mail Ignored Address", "create"))

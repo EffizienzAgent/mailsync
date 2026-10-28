@@ -1,4 +1,5 @@
 import frappe
+from frappe import _
 
 from mailsync import tls
 from mailsync.mail_status import check, list_entry, quote
@@ -11,7 +12,10 @@ MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", 
 def login(account):
 	tls.apply()
 	frappe.conf.imap_timeout = frappe.conf.imap_timeout or IMAP_TIMEOUT
-	return account.get_incoming_server(in_receive=True)
+	server = account.get_incoming_server(in_receive=True)
+	if not getattr(server, "imap", None):
+		frappe.throw(_("Could not log in to {0}").format(account.name))
+	return server
 
 
 def folders(imap):

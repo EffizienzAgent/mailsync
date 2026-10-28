@@ -11,6 +11,7 @@ def normalize(address):
 
 def clear():
 	setattr(frappe.local, CACHE_KEY, None)
+	frappe.local.mailsync_own_answers = None
 
 
 def own_addresses():
@@ -27,7 +28,18 @@ def is_own(address):
 	address = normalize(address)
 	if address in own_addresses():
 		return True
-	return any(frappe.get_attr(method)(address) for method in frappe.get_hooks("mailsync_own_address"))
+	answers = frappe.local.mailsync_own_answers = getattr(frappe.local, "mailsync_own_answers", None) or {}
+	if address not in answers:
+		answers[address] = any(ask(method, address) for method in frappe.get_hooks("mailsync_own_address"))
+	return answers[address]
+
+
+def ask(method, address):
+	try:
+		return frappe.get_attr(method)(address)
+	except Exception:
+		frappe.log_error(title=_("Own address check failed: {0}").format(method))
+		return False
 
 
 def contact_for(address):

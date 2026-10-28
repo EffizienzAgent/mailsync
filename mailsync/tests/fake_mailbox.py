@@ -73,8 +73,9 @@ class FakeMailbox:
 		before = self.day(tokens, "SENTBEFORE")
 		found = []
 		for uid in sorted(self.mails):
-			sent = parsedate_to_datetime(BytesHeaderParser().parsebytes(self.mails[uid])["Date"]).date()
-			if (since and sent < since) or (before and sent >= before):
+			header = BytesHeaderParser().parsebytes(self.mails[uid])["Date"]
+			sent = header and parsedate_to_datetime(header).date()
+			if sent and ((since and sent < since) or (before and sent >= before)):
 				continue
 			found.append(uid)
 		return [u for u in found if u >= start] or ([found[-1]] if found else [])

@@ -22,7 +22,10 @@ def refresh(doc):
 			frappe.db.set_value("Mail Import Address", row.name, summary(found[email]), update_modified=False)
 	for email, entry in found.items():
 		if email not in rows and not resolved(email):
-			add(doc.name, email, entry)
+			try:
+				add(doc.name, email, entry)
+			except Exception:
+				frappe.log_error(title=_("Address review failed: {0}").format(email))
 
 
 def collect(mail_import):
@@ -91,7 +94,7 @@ def decide(email, decision, contact=None):
 	)
 
 
-@frappe.whitelist()
+@frappe.whitelist(methods=["POST"])
 def ignore_many(names):
 	for name in frappe.parse_json(names) if isinstance(names, str) else names:
 		doc = frappe.get_doc("Mail Import Address", name)

@@ -46,7 +46,10 @@ def links(participants):
 	found = []
 	for address in participants:
 		for method in methods:
-			found += method(address) or []
+			try:
+				found += method(address) or []
+			except Exception:
+				frappe.log_error(title=_("Recipient links failed: {0}").format(address))
 	return found
 
 
@@ -62,7 +65,10 @@ def decide(row):
 def run(doc, imap, deadline):
 	account = frappe.get_doc("Email Account", doc.email_account)
 	changed = []
+	chosen = {row.folder for row in doc.folders}
 	for folder, uidvalidity in pending_folders(doc.name):
+		if folder not in chosen:
+			continue
 		if mailbox.uidvalidity(imap, folder) != uidvalidity:
 			changed.append(folder)
 			continue

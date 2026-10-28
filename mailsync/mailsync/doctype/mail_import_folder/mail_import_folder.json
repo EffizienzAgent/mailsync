@@ -19,13 +19,13 @@
   },
   {
    "fieldname": "uidvalidity",
-   "fieldtype": "Int",
+   "fieldtype": "Long Int",
    "label": "UIDVALIDITY",
    "read_only": 1
   },
   {
    "fieldname": "scanned_uid",
-   "fieldtype": "Int",
+   "fieldtype": "Long Int",
    "label": "Scanned UID",
    "read_only": 1
   },

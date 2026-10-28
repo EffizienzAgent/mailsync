@@ -5,7 +5,7 @@ from frappe.tests import IntegrationTestCase
 
 from mailsync import sent_mail
 from mailsync.backfill import addresses, mailbox, scan
-from mailsync.tests.factories import make_account, make_import, make_mail, unique
+from mailsync.tests.factories import hooks, make_account, make_import, make_mail, unique
 from mailsync.tests.fake_mailbox import FakeMailbox, raw_mail
 
 LATER = 10**12
@@ -111,3 +111,48 @@ class TestBackfillScan(IntegrationTestCase):
 		self.run_scan()
 		self.assertTrue(self.imap.readonly)
 		self.assertTrue(all(self.imap.readonly))
+
+	def test_bad_mails_do_not_stop_scan(self):
+		long_id = "x" * 300 + "@acme.test"
+		self.imap.add("Kunden/Acme", 1, raw_mail("a@acme.test", self.own, "Long id", long_id))
+		self.imap.add(
+			"Kunden/Acme",
+			2,
+			b"From: J\xfcrgen <j@acme.test>\r\nTo: " + self.own.encode() + b"\r\nSubject: 8bit\r\n\r\nHi\r\n",
+		)
+		self.imap.add("Kunden/Acme", 3, raw_mail("a@acme.test", self.own, "Fine", "fine@acme.test"))
+		self.assertTrue(self.run_scan())
+		messages = self.messages()
+		self.assertEqual([m.uid for m in messages], [1, 2, 3])
+		self.assertEqual(messages[0].message_id, long_id)
+		self.assertEqual(scan.participant_list(messages[1]), ["j@acme.test"])
+
+	def test_folded_quoted_name_keeps_address(self):
+		raw = (
+			b'From: "Doe,\r\n Jane" <jane@acme.test>\r\nTo: '
+			+ self.own.encode()
+			+ b"\r\nSubject: Folded\r\nMessage-ID: <f@acme.test>\r\n\r\nHi\r\n"
+		)
+		self.imap.add("Kunden/Acme", 1, raw)
+		self.run_scan()
+		[message] = self.messages()
+		self.assertEqual(scan.participant_names(message), {"jane@acme.test": "Doe, Jane"})
+
+	def test_failing_own_hook_does_not_stop_scan(self):
+		self.imap.add("Kunden/Acme", 1, raw_mail("a@acme.test", self.own, "x", "h@acme.test"))
+		with hooks("mailsync_own_address", ["mailsync.tests.test_backfill_scan.broken_hook"]):
+			self.assertTrue(self.run_scan())
+		self.assertEqual(scan.participant_list(self.messages()[0]), ["a@acme.test"])
+
+	def test_large_uid_and_uidvalidity(self):
+		self.imap.folder("Kunden/Acme", uidvalidity=3_000_000_000)
+		self.imap.add("Kunden/Acme", 2_500_000_000, raw_mail("a@acme.test", self.own, "big", "u@acme.test"))
+		self.assertTrue(self.run_scan())
+		self.assertEqual([m.uid for m in self.messages()], [2_500_000_000])
+
+	def test_lookup_index_exists(self):
+		self.assertTrue(frappe.db.has_index("tabMail Import Message", "mail_import_folder_uid_index"))
+
+
+def broken_hook(address):
+	raise ValueError("broken hook")

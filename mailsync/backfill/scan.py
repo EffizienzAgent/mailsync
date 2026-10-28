@@ -1,7 +1,9 @@
+import re
 import time
 from email.utils import getaddresses
 
 import frappe
+from frappe import _
 from frappe.email.receive import Email, InboundMail
 
 from mailsync import sent_mail
@@ -10,6 +12,7 @@ from mailsync.mail_status import check
 from mailsync.sent_mail import FETCH_SIZE, FETCH_UID
 
 CHUNK = 200
+FOLDING = re.compile(r"\r?\n[ \t]+")
 HEADERS = "FROM TO CC MESSAGE-ID DATE SUBJECT"
 
 
@@ -31,8 +34,10 @@ def scan_folder(doc, row, imap, deadline):
 		if time.monotonic() > deadline and start:
 			return False
 		chunk = uids[start : start + CHUNK]
-		for uid, size, headers in fetch_headers(imap, chunk):
-			record(doc, row, uid, size, headers)
+		mails = [(uid, size, parse(headers)) for uid, size, headers in fetch_headers(imap, chunk)]
+		present = sent_mail.known_ids([mail.message_id for _, _, mail in mails if mail])
+		for uid, size, mail in mails:
+			record(doc, row, uid, size, mail, present)
 		row.scanned_uid = chunk[-1]
 		row.db_update()
 		frappe.db.commit()
@@ -58,32 +63,55 @@ def fetch_headers(imap, uids):
 				yield int(uid[1]), int(size[1]) if size else 0, part[1]
 
 
-def record(doc, row, uid, size, headers):
+def parse(headers):
+	try:
+		return Email(headers.decode("utf-8", "replace"))
+	except Exception:
+		return None
+
+
+def record(doc, row, uid, size, mail, present):
 	key = {"mail_import": doc.name, "folder": row.folder, "uidvalidity": row.uidvalidity, "uid": uid}
 	if frappe.db.exists("Mail Import Message", key):
 		return
-	mail = Email(headers)
+	frappe.db.savepoint("scan_mail")
+	try:
+		values = describe(mail, size, present)
+		frappe.get_doc({"doctype": "Mail Import Message", **key, **values}).db_insert()
+	except Exception as error:
+		frappe.db.rollback(save_point="scan_mail")
+		frappe.log_error(title=_("Mail scan failed: {0} UID {1}").format(row.folder, uid))
+		frappe.get_doc(
+			{
+				"doctype": "Mail Import Message",
+				**key,
+				"size": size,
+				"state": "Failed",
+				"error": str(error)[:1000],
+			}
+		).db_insert()
+
+
+def describe(mail, size, present):
+	if mail is None:
+		raise ValueError("unreadable mail headers")
 	sender = first_address(mail.mail.get("From"))
-	frappe.get_doc(
-		{
-			"doctype": "Mail Import Message",
-			**key,
-			"size": size,
-			"message_id": mail.message_id or None,
-			"subject": mail.subject,
-			"sender": (InboundMail.decode_email(mail.mail.get("From")) or "")[:140],
-			"mail_date": mail.date,
-			"outgoing": int(bool(sender) and addresses.is_own(sender)),
-			"participants": "\n".join(f"{a} {n}".strip() for a, n in participants(mail.mail)),
-			"state": state(mail.message_id, size),
-		}
-	).db_insert()
+	return {
+		"size": size,
+		"message_id": mail.message_id or None,
+		"subject": mail.subject,
+		"sender": (InboundMail.decode_email(mail.mail.get("From")) or "")[:140],
+		"mail_date": mail.date,
+		"outgoing": int(bool(sender) and addresses.is_own(sender)),
+		"participants": "\n".join(f"{a} {n}".strip() for a, n in participants(mail.mail)),
+		"state": state(mail.message_id, size, present),
+	}
 
 
-def state(message_id, size):
+def state(message_id, size, present):
 	if size > sent_mail.MAX_MAIL_BYTES:
 		return "Too Large"
-	if message_id and sent_mail.known(message_id):
+	if message_id in present:
 		return "Present"
 	return "Pending"
 
@@ -91,11 +119,15 @@ def state(message_id, size):
 def named_addresses(*headers):
 	found = {}
 	for header in headers:
-		for name, address in getaddresses([str(header or "")]):
+		for name, address in getaddresses([unfold(header)]):
 			address = addresses.normalize(address)
-			if "@" in address and address not in found:
-				found[address] = (InboundMail.decode_email(name) or "").strip()
+			if "@" in address and " " not in address and address not in found:
+				found[address] = " ".join((InboundMail.decode_email(name) or "").split())
 	return found
+
+
+def unfold(header):
+	return FOLDING.sub(" ", str(header or ""))
 
 
 def first_address(header):

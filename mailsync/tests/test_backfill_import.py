@@ -215,3 +215,32 @@ class TestBackfillImport(IntegrationTestCase):
 				"Mail Import Message", {"state": "Failed", "mail_import": self.doc.name}, "error"
 			),
 		)
+
+	def test_removed_folder_not_imported(self):
+		self.imap.folder("Privat", uidvalidity=3)
+		self.imap.add("Privat", 1, raw_mail(self.customer, self.own, "Private", "p@acme.test"))
+		wanted = self.add(self.customer, self.own)
+		self.doc.append("folders", {"folder": "Privat"})
+		self.doc.save(ignore_permissions=True)
+		self.doc.reload()
+		scan.scan(self.doc, self.imap, LATER)
+		self.doc.reload()
+		self.doc.folders = [row for row in self.doc.folders if row.folder == FOLDER]
+		self.doc.save(ignore_permissions=True)
+		self.assertEqual(
+			frappe.db.count("Mail Import Message", {"mail_import": self.doc.name, "folder": "Privat"}), 0
+		)
+		importer.run(self.doc, self.imap, LATER)
+		self.assertTrue(self.communication(wanted))
+		self.assertFalse(self.communication("p@acme.test"))
+
+	def test_failing_link_hook_does_not_fail_mail(self):
+		message_id = self.add(self.customer, self.own)
+		with hooks("mailsync_recipient_links", ["mailsync.tests.test_backfill_import.broken_hook"]):
+			self.run_import()
+		self.assertEqual(self.states(), ["Imported"])
+		self.assertTrue(self.communication(message_id))
+
+
+def broken_hook(address):
+	raise ValueError("broken hook")
