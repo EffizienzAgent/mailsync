@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/EffizienzAgent/mailsync/compare/v0.3.1...v0.4.0) (2026-11-03)
+
+
+### Features
+
+* add app icon and apps screen entry ([f051037](https://github.com/EffizienzAgent/mailsync/commit/f0510377e6955325dc390c49671c43329c5bafb3))
+
 ## [0.3.1](https://github.com/EffizienzAgent/mailsync/compare/v0.3.0...v0.3.1) (2026-10-28)
 
 
