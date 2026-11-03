@@ -1,3 +1,5 @@
+<img src="docs/images/logo.png" alt="" width="96" align="right">
+
 IMAP mail sync for the Frappe Framework
 
 Mailsync keeps Frappe's Communications in step with your IMAP mailbox:

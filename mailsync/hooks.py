@@ -4,6 +4,16 @@ app_publisher = "EffizienzAgent (Tobias Mende)"
 app_description = "IMAP mail sync: Sent folder import and reply/close status from the mailbox"
 app_license = "mit"
 
+app_logo_url = "/assets/mailsync/images/mailsync-logo.svg"
+add_to_apps_screen = [
+	{
+		"name": "mailsync",
+		"logo": "/assets/mailsync/images/mailsync-logo.svg",
+		"title": "Mailsync",
+		"route": "/app/mail-import",
+	}
+]
+
 before_request = ["mailsync.tls.apply"]
 before_job = ["mailsync.tls.apply"]
 make_email_body_message = ["mailsync.references.set_references"]
